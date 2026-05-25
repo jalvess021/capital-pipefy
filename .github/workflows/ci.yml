@@ -20,4 +20,9 @@ jobs:
         run: go mod download
 
       - name: Vet
-        run: go vet ./...
+        run: |
+          if [ -n "$(find . -name '*.go' -not -path './vendor/*')" ]; then
+            go vet ./...
+          else
+            echo "No Go files yet, skipping vet"
+          fi
