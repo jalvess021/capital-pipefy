@@ -3,3 +3,5 @@ capital-pipefy
 *.exe
 *.test
 vendor/
+tmp/
+logs/
