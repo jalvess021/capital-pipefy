@@ -27,6 +27,7 @@ services:
 
   # --- Tooling ---
   migrate:
+    profiles: [dev]
     image: migrate/migrate
     command: ["-path", "/migrations", "-database", "${DATABASE_URL}", "up"]
     volumes:
@@ -40,9 +41,11 @@ services:
 
   # --- App ---
   api-dev:
+    profiles: [dev]
     build:
       context: .
       target: dev
+    container_name: capital-pipefy-api
     volumes:
       - .:/app
     env_file: .env
@@ -73,9 +76,8 @@ services:
     ports:
       - "8080:80"
     volumes:
-      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-    depends_on:
-      - api
+      - ./infra/nginx/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
+    env_file: .env
     networks:
       - capital-pipefy-net
     restart: unless-stopped
