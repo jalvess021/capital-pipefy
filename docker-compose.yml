@@ -45,7 +45,6 @@ services:
     build:
       context: .
       target: dev
-    container_name: capital-pipefy-api
     volumes:
       - .:/app
     env_file: .env
@@ -57,11 +56,24 @@ services:
     networks:
       - capital-pipefy-net
 
+  nginx-dev:
+    profiles: [dev]
+    image: nginx:1.27-alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./infra/nginx/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
+    env_file: .env
+    environment:
+      - API_HOST=api-dev
+    networks:
+      - capital-pipefy-net
+    restart: unless-stopped
+
   api:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: capital-pipefy-api
     env_file: .env
     depends_on:
       postgres:
@@ -72,12 +84,13 @@ services:
 
   nginx:
     image: nginx:1.27-alpine
-    container_name: capital-pipefy-nginx
     ports:
       - "8080:80"
     volumes:
       - ./infra/nginx/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
     env_file: .env
+    environment:
+      - API_HOST=api
     networks:
       - capital-pipefy-net
     restart: unless-stopped
