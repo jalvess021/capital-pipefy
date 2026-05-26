@@ -20,5 +20,9 @@ func New() (*zap.Logger, error) {
         zap.InfoLevel,
     )
 
-    return zap.New(core, zap.AddCaller(), zap.AddStacktrace(zap.ErrorLevel)), nil
+    return zap.New(core, 
+        zap.AddCaller(), 
+        zap.AddCallerSkip(1), 
+        zap.AddStacktrace(zap.ErrorLevel),
+    ), nil
 }
