@@ -1,4 +1,4 @@
-package interfaces
+package repository
 
 import "github.com/jalvess021/capital-pipefy/internal/domain"
 
