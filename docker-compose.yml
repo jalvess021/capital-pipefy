@@ -1,32 +1,6 @@
 services:
 
-  api-dev:
-    build:
-      context: .
-      target: dev
-    volumes:
-      - .:/app
-      - /app/vendor
-    env_file: .env
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - capital-pipefy-net
-
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: capital-pipefy-api
-    env_file: .env
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - capital-pipefy-net
-    restart: unless-stopped
-
+  # --- Infra ---
   postgres:
     image: postgres:16-alpine
     container_name: capital-pipefy-postgres
@@ -46,12 +20,52 @@ services:
     restart: unless-stopped
 
   redis:
-    profiles:
-      [full]
+    profiles: [full]
 
   rabbitmq:
-    profiles:
-      [full]
+    profiles: [full]
+
+  # --- Tooling ---
+  migrate:
+    image: migrate/migrate
+    command: ["-path", "/migrations", "-database", "${DATABASE_URL}", "up"]
+    volumes:
+      - ./migrations:/migrations
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - capital-pipefy-net
+    restart: "no"
+
+  # --- App ---
+  api-dev:
+    build:
+      context: .
+      target: dev
+    volumes:
+      - .:/app
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - capital-pipefy-net
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: capital-pipefy-api
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - capital-pipefy-net
+    restart: unless-stopped
 
   nginx:
     image: nginx:1.27-alpine
