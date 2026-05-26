@@ -1,28 +1,31 @@
 package database
 
 import (
-    "database/sql"
     "fmt"
-    _ "github.com/lib/pq"
+
+    gormpostgres "gorm.io/driver/postgres"
+    "gorm.io/gorm"
 )
 
 type PostgresDB struct {
-    db *sql.DB
+    db *gorm.DB
 }
 
 func NewPostgres(url string) (*PostgresDB, error) {
-    db, err := sql.Open("postgres", url)
+    db, err := gorm.Open(gormpostgres.Open(url), &gorm.Config{})
     if err != nil {
-        return nil, fmt.Errorf("failed to open postgres: %w", err)
-    }
-
-    if err := db.Ping(); err != nil {
-        return nil, fmt.Errorf("failed to ping postgres: %w", err)
+        return nil, fmt.Errorf("failed to connect to database: %w", err)
     }
 
     return &PostgresDB{db: db}, nil
 }
 
-func (p *PostgresDB) Ping() error  { return p.db.Ping() }
-func (p *PostgresDB) Close() error { return p.db.Close() }
-func (p *PostgresDB) DB() *sql.DB  { return p.db }
+func (p *PostgresDB) GormDB() *gorm.DB { return p.db }
+
+func (p *PostgresDB) Close() error {
+    sql, err := p.db.DB()
+    if err != nil {
+        return err
+    }
+    return sql.Close()
+}
