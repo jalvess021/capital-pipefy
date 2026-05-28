@@ -37,7 +37,7 @@ services:
         condition: service_healthy
     networks:
       - capital-pipefy-net
-    restart: "no"
+    restart: on-failure
 
   # --- App ---
   api-dev:
