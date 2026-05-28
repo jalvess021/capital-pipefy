@@ -1,0 +1,134 @@
+basePath: /
+definitions:
+  dto.CardUpdatedWebhookRequest:
+    properties:
+      card_id:
+        type: string
+      cliente_email:
+        type: string
+      event_id:
+        type: string
+      timestamp:
+        type: string
+    required:
+    - card_id
+    - cliente_email
+    - event_id
+    - timestamp
+    type: object
+  dto.ClientResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      nome:
+        type: string
+      prioridade:
+        type: string
+      status:
+        type: string
+      tipo_solicitacao:
+        type: string
+      valor_patrimonio:
+        type: number
+    type: object
+  dto.CreateClientRequest:
+    properties:
+      cliente_email:
+        type: string
+      cliente_nome:
+        type: string
+      tipo_solicitacao:
+        type: string
+      valor_patrimonio:
+        type: number
+    required:
+    - cliente_email
+    - cliente_nome
+    - tipo_solicitacao
+    - valor_patrimonio
+    type: object
+info:
+  contact: {}
+  description: API para gestao de clientes e integracao com Pipefy
+  title: Capital Pipefy API
+  version: "1.0"
+paths:
+  /clientes:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Dados do cliente
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateClientRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.ClientResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Cria um novo cliente
+      tags:
+      - clientes
+  /webhooks/pipefy/card-updated:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Payload do webhook
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CardUpdatedWebhookRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Processa atualização de card do Pipefy
+      tags:
+      - webhooks
+swagger: "2.0"

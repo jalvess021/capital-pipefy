@@ -1,9 +1,15 @@
+// @title           Capital Pipefy API
+// @version         1.0
+// @description     API para gestao de clientes e integracao com Pipefy
+// @BasePath        /
+
 package main
 
 import (
 	"os"
 
 	"go.uber.org/zap"
+	_ "github.com/jalvess021/capital-pipefy/docs"
 	"github.com/jalvess021/capital-pipefy/internal/bootstrap"
 	"github.com/jalvess021/capital-pipefy/internal/logger"
 	"github.com/jalvess021/capital-pipefy/internal/route"
