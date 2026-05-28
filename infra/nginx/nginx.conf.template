@@ -1,5 +1,5 @@
 upstream api {
-    server ${API_HOST}:${PORT:-8080};
+    server ${API_HOST}:${PORT};
     keepalive 32;
 }
 

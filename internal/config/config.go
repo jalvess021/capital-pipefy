@@ -17,13 +17,8 @@ type Config struct {
 
 func Load() (*Config, error) {
 
-    port := os.Getenv("PORT")
-    if port == "" {
-        port = "8080"
-    }
-
     cfg := &Config{
-        Port:         port,
+        Port:         os.Getenv("PORT"),
         DatabaseURL:  os.Getenv("DATABASE_URL"),
         RedisURL:     os.Getenv("REDIS_URL"),
         RabbitMQURL:  os.Getenv("RABBITMQ_URL"),
@@ -32,6 +27,9 @@ func Load() (*Config, error) {
         PipefyToken:  os.Getenv("PIPEFY_TOKEN"),
     }
 
+    if cfg.Port == "" {
+        return nil, fmt.Errorf("PORT is required")
+    }
     if cfg.DatabaseURL == "" {
         return nil, fmt.Errorf("DATABASE_URL is required")
     }
