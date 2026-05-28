@@ -35,11 +35,14 @@ func Load() (*Config, error) {
     if cfg.DatabaseURL == "" {
         return nil, fmt.Errorf("DATABASE_URL is required")
     }
-    if cfg.RedisURL == "" {
-        return nil, fmt.Errorf("REDIS_URL is required")
+    if cfg.PipefyAPIURL == "" {
+        return nil, fmt.Errorf("PIPEFY_API_URL is required")
     }
-    if cfg.RabbitMQURL == "" {
-        return nil, fmt.Errorf("RABBITMQ_URL is required")
+    if cfg.PipefyToken == "" {
+        return nil, fmt.Errorf("PIPEFY_TOKEN is required")
+    }
+    if cfg.PipefyPipeID == "" {
+        return nil, fmt.Errorf("PIPEFY_PIPE_ID is required")
     }
 
     return cfg, nil
