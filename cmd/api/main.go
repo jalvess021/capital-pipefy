@@ -1,13 +1,12 @@
 package main
 
 import (
-	"net/http"
 	"os"
 
-	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"github.com/jalvess021/capital-pipefy/internal/bootstrap"
 	"github.com/jalvess021/capital-pipefy/internal/logger"
+	"github.com/jalvess021/capital-pipefy/internal/route"
 )
 
 func main() {
@@ -31,10 +30,7 @@ func main() {
 
 	logger.ApplicationInfo(log, "Application starting", zap.String("port", app.Config.Port))
 
-	router := gin.Default()
-	router.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"status": "ok"})
-	})
+	router := route.SetupRouter(app)
 
 	logger.ApplicationInfo(log, "Server ready", zap.String("port", app.Config.Port))
 
