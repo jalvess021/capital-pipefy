@@ -60,7 +60,7 @@ services:
     profiles: [dev]
     image: nginx:1.27-alpine
     ports:
-      - "${NGINX_PORT}:80"
+      - "${NGINX_PORT:-8000}:80"
     volumes:
       - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./infra/nginx/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
@@ -88,7 +88,7 @@ services:
     profiles: [prod]
     image: nginx:1.27-alpine
     ports:
-      - "${NGINX_PORT}:80"
+      - "${NGINX_PORT:-8000}:80"
     volumes:
       - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./infra/nginx/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
