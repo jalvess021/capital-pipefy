@@ -37,7 +37,7 @@ services:
         condition: service_healthy
     networks:
       - capital-pipefy-net
-    restart: "no"
+    restart: on-failure
 
   # --- App ---
   api-dev:
@@ -60,13 +60,15 @@ services:
     profiles: [dev]
     image: nginx:1.27-alpine
     ports:
-      - "${NGINX_PORT}:80"
+      - "${NGINX_PORT:-8000}:80"
     volumes:
       - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./infra/nginx/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
     env_file: .env
     environment:
       - API_HOST=api-dev
+    depends_on:
+      - api-dev
     networks:
       - capital-pipefy-net
     restart: unless-stopped
@@ -88,13 +90,15 @@ services:
     profiles: [prod]
     image: nginx:1.27-alpine
     ports:
-      - "${NGINX_PORT}:80"
+      - "${NGINX_PORT:-8000}:80"
     volumes:
       - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./infra/nginx/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
     env_file: .env
     environment:
       - API_HOST=api
+    depends_on:
+      - api
     networks:
       - capital-pipefy-net
     restart: unless-stopped

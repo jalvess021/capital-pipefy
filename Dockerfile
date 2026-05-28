@@ -18,5 +18,5 @@ RUN apk --no-cache add ca-certificates tzdata
 WORKDIR /app
 COPY --from=builder /app/capital-pipefy .
 COPY --from=builder /app/migrations ./migrations
-EXPOSE 8282
+EXPOSE 8080
 CMD ["./capital-pipefy"]

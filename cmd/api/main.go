@@ -21,27 +21,26 @@ func main() {
 		panic(err)
 	}
 
-	app, err := bootstrap.NewApp()
+	app, err := bootstrap.NewApp(log)
 	if err != nil {
-		logger.ApplicationError(log, "Failed to bootstrap application", err)
+		logger.ApplicationError(log, "failed to bootstrap application", err)
 		os.Exit(1)
 	}
 	defer app.DB.Close()
 
-	if os.Getenv("PORT") == "" {
-		logger.ApplicationWarn(log, "PORT environment variable not set, using default",
-			zap.String("port", app.Config.Port),
-		)
-	}
-
-	logger.ApplicationInfo(log, "Application starting", zap.String("port", app.Config.Port))
+	logger.ApplicationInfo(log, "application starting",
+		zap.String("port", app.Config.Port),
+		zap.String("version", "1.0.0"),
+	)
 
 	router := route.SetupRouter(app)
 
-	logger.ApplicationInfo(log, "Server ready", zap.String("port", app.Config.Port))
+	logger.ApplicationInfo(log, "server ready",
+		zap.String("port", app.Config.Port),
+	)
 
 	if err := router.Run(":" + app.Config.Port); err != nil {
-		logger.ApplicationError(log, "Failed to start server", err,
+		logger.ApplicationError(log, "failed to start server", err,
 			zap.String("port", app.Config.Port),
 		)
 		os.Exit(1)

@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"go.uber.org/zap"
 	"github.com/jalvess021/capital-pipefy/internal/config"
 	"github.com/jalvess021/capital-pipefy/internal/database"
 )
@@ -11,7 +12,7 @@ type App struct {
 	Providers *Providers
 }
 
-func NewApp() (*App, error) {
+func NewApp(log *zap.Logger) (*App, error) {
 	cfg, err := config.Load()
 	if err != nil {
 		return nil, err
@@ -25,6 +26,6 @@ func NewApp() (*App, error) {
 	return &App{
 		Config:    cfg,
 		DB:        db,
-		Providers: buildProviders(db, cfg),
+		Providers: buildProviders(db, cfg, log),
 	}, nil
 }

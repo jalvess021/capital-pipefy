@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"go.uber.org/zap"
 	"github.com/jalvess021/capital-pipefy/internal/config"
 	"github.com/jalvess021/capital-pipefy/internal/database"
 	"github.com/jalvess021/capital-pipefy/internal/handler"
@@ -14,14 +15,14 @@ type Providers struct {
 	WebhookHandler *handler.WebhookHandler
 }
 
-func buildProviders(db *database.PostgresDB, cfg *config.Config) *Providers {
+func buildProviders(db *database.PostgresDB, cfg *config.Config, log *zap.Logger) *Providers {
 	clientRepo := postgresrepo.NewClientRepository(db.GormDB())
 	eventRepo := postgresrepo.NewEventRepository(db.GormDB())
 
 	pipefy := pipefyclient.NewClient(cfg.PipefyAPIURL, cfg.PipefyToken, cfg.PipefyPipeID)
 
-	clientSvc := service.NewClientService(clientRepo, pipefy)
-	webhookSvc := service.NewWebhookService(clientRepo, eventRepo)
+	clientSvc := service.NewClientService(clientRepo, pipefy, log)
+	webhookSvc := service.NewWebhookService(clientRepo, eventRepo, log)
 
 	return &Providers{
 		ClientHandler:  handler.NewClientHandler(clientSvc),
