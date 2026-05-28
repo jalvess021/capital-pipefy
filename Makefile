@@ -1,4 +1,4 @@
-.PHONY: dev prod down test test-integration
+.PHONY: dev prod down test
 
 dev:
 	@[ -f .env ] || cp .env.example .env
@@ -12,7 +12,6 @@ down:
 	docker compose --profile dev --profile prod down --remove-orphans
 
 test:
-	@echo "→ unit + feature"
-	go test ./internal/service/... ./internal/handler/... -v
-	@echo "→ integration (requer DATABASE_URL)"
-	go test -tags=integration ./test/integration/... -v
+	docker exec capital-pipefy-api-dev-1 sh -c \
+	  "go test ./internal/service/... ./internal/handler/... -v && \
+	   go test -tags=integration ./test/integration/... -v"
