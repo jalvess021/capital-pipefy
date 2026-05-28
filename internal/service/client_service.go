@@ -6,6 +6,7 @@ import (
 	"github.com/jalvess021/capital-pipefy/internal/domain"
 	"github.com/jalvess021/capital-pipefy/internal/dto"
 	"github.com/jalvess021/capital-pipefy/internal/repository"
+	"github.com/jalvess021/capital-pipefy/internal/apperrors"
 )
 
 type ClientService struct {
@@ -19,7 +20,7 @@ func NewClientService(repo repository.ClientRepository) *ClientService {
 func (s *ClientService) Create(req dto.CreateClientRequest) (*dto.ClientResponse, error) {
 	_, err := s.repo.FindByEmail(req.Email)
 	if err == nil {
-		return nil, fmt.Errorf("client with email %s already exists", req.Email)
+		return nil, fmt.Errorf("client with email %s already exists: %w", req.Email, apperrors.ErrConflict)
 	}
 
 	client := &domain.Client{
@@ -32,7 +33,7 @@ func (s *ClientService) Create(req dto.CreateClientRequest) (*dto.ClientResponse
 	}
 
 	if err := s.repo.Save(client); err != nil {
-		return nil, fmt.Errorf("failed to save client: %w", err)
+		return nil, fmt.Errorf("failed to save client: %w", apperrors.ErrInternal)
 	}
 
 	return &dto.ClientResponse{
