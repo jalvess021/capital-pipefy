@@ -18,6 +18,17 @@ func NewWebhookHandler(service *service.WebhookService) *WebhookHandler {
 	return &WebhookHandler{service: service}
 }
 
+// CardUpdated godoc
+// @Summary     Processa atualização de card do Pipefy
+// @Tags        webhooks
+// @Accept      json
+// @Produce     json
+// @Param       body body dto.CardUpdatedWebhookRequest true "Payload do webhook"
+// @Success     200
+// @Failure     400 {object} map[string]string
+// @Failure     404 {object} map[string]string
+// @Failure     500 {object} map[string]string
+// @Router      /webhooks/pipefy/card-updated [post]
 func (h *WebhookHandler) CardUpdated(c *gin.Context) {
 	var req dto.CardUpdatedWebhookRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
