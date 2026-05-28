@@ -3,8 +3,10 @@
 package integration_test
 
 import (
+	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/jalvess021/capital-pipefy/internal/database"
 	"github.com/jalvess021/capital-pipefy/internal/domain"
@@ -27,15 +29,20 @@ func setupDB(t *testing.T) *database.PostgresDB {
 	return db
 }
 
+func uniqueEmail(prefix string) string {
+	return fmt.Sprintf("%s-%d@example.com", prefix, time.Now().UnixNano())
+}
+
 func TestClientRepository_SaveAndFind(t *testing.T) {
 	db := setupDB(t)
 	defer db.Close()
 
 	repo := postgresrepo.NewClientRepository(db.GormDB())
+	email := uniqueEmail("integration")
 
 	client := &domain.Client{
 		Nome:            "Integration Test User",
-		Email:           "integration@example.com",
+		Email:           email,
 		TipoSolicitacao: "investimento",
 		ValorPatrimonio: 300_000,
 		Status:          "Aguardando Análise",
@@ -49,7 +56,7 @@ func TestClientRepository_SaveAndFind(t *testing.T) {
 		t.Error("expected ID to be set after Save")
 	}
 
-	found, err := repo.FindByEmail("integration@example.com")
+	found, err := repo.FindByEmail(email)
 	if err != nil {
 		t.Fatalf("FindByEmail failed: %v", err)
 	}
@@ -63,10 +70,11 @@ func TestClientRepository_UpdateStatusAndPriority(t *testing.T) {
 	defer db.Close()
 
 	repo := postgresrepo.NewClientRepository(db.GormDB())
+	email := uniqueEmail("update")
 
 	client := &domain.Client{
 		Nome:            "Update Test User",
-		Email:           "update@example.com",
+		Email:           email,
 		TipoSolicitacao: "investimento",
 		ValorPatrimonio: 100_000,
 		Status:          "Aguardando Análise",
@@ -76,11 +84,11 @@ func TestClientRepository_UpdateStatusAndPriority(t *testing.T) {
 		t.Fatalf("Save failed: %v", err)
 	}
 
-	if err := repo.UpdateStatusAndPriority("update@example.com", "Processado", "prioridade_alta"); err != nil {
+	if err := repo.UpdateStatusAndPriority(email, "Processado", "prioridade_alta"); err != nil {
 		t.Fatalf("UpdateStatusAndPriority failed: %v", err)
 	}
 
-	updated, err := repo.FindByEmail("update@example.com")
+	updated, err := repo.FindByEmail(email)
 	if err != nil {
 		t.Fatalf("FindByEmail after update failed: %v", err)
 	}
