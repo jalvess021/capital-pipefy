@@ -17,5 +17,6 @@ FROM alpine:3.20 AS prod
 RUN apk --no-cache add ca-certificates tzdata
 WORKDIR /app
 COPY --from=builder /app/capital-pipefy .
+COPY --from=builder /app/migrations ./migrations
 EXPOSE 8282
 CMD ["./capital-pipefy"]

@@ -1,32 +1,6 @@
 services:
 
-  api-dev:
-    build:
-      context: .
-      target: dev
-    volumes:
-      - .:/app
-      - /app/vendor
-    env_file: .env
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - capital-pipefy-net
-
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: capital-pipefy-api
-    env_file: .env
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - capital-pipefy-net
-    restart: unless-stopped
-
+  # --- Infra ---
   postgres:
     image: postgres:16-alpine
     container_name: capital-pipefy-postgres
@@ -46,22 +20,81 @@ services:
     restart: unless-stopped
 
   redis:
-    profiles:
-      [full]
+    profiles: [full]
 
   rabbitmq:
-    profiles:
-      [full]
+    profiles: [full]
 
-  nginx:
+  # --- Tooling ---
+  migrate:
+    profiles: [dev]
+    image: migrate/migrate
+    command: ["-path", "/migrations", "-database", "${DATABASE_URL}", "up"]
+    volumes:
+      - ./migrations:/migrations
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - capital-pipefy-net
+    restart: "no"
+
+  # --- App ---
+  api-dev:
+    profiles: [dev]
+    build:
+      context: .
+      target: dev
+    volumes:
+      - .:/app
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - capital-pipefy-net
+
+  nginx-dev:
+    profiles: [dev]
     image: nginx:1.27-alpine
-    container_name: capital-pipefy-nginx
     ports:
-      - "8080:80"
+      - "${NGINX_PORT}:80"
     volumes:
       - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infra/nginx/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
+    env_file: .env
+    environment:
+      - API_HOST=api-dev
+    networks:
+      - capital-pipefy-net
+    restart: unless-stopped
+
+  api:
+    profiles: [prod]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: .env
     depends_on:
-      - api
+      postgres:
+        condition: service_healthy
+    networks:
+      - capital-pipefy-net
+    restart: unless-stopped
+
+  nginx:
+    profiles: [prod]
+    image: nginx:1.27-alpine
+    ports:
+      - "${NGINX_PORT}:80"
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infra/nginx/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
+    env_file: .env
+    environment:
+      - API_HOST=api
     networks:
       - capital-pipefy-net
     restart: unless-stopped

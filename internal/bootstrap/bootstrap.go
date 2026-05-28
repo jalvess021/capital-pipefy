@@ -5,16 +5,26 @@ import (
 	"github.com/jalvess021/capital-pipefy/internal/database"
 )
 
-func NewApp() (*config.Config, database.Database, error) {
+type App struct {
+	Config    *config.Config
+	DB        *database.PostgresDB
+	Providers *Providers
+}
+
+func NewApp() (*App, error) {
 	cfg, err := config.Load()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	db, err := database.NewPostgres(cfg.DatabaseURL)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return cfg, db, nil
+	return &App{
+		Config:    cfg,
+		DB:        db,
+		Providers: buildProviders(db, cfg),
+	}, nil
 }
