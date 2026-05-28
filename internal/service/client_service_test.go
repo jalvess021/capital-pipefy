@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"go.uber.org/zap"
 	"github.com/jalvess021/capital-pipefy/internal/apperrors"
 	"github.com/jalvess021/capital-pipefy/internal/domain"
 	"github.com/jalvess021/capital-pipefy/internal/dto"
@@ -94,7 +95,7 @@ func validRequest() dto.CreateClientRequest {
 // --- tests ---
 
 func TestCreateClient_Success(t *testing.T) {
-	svc := NewClientService(notFoundRepo(), okPipefy())
+	svc := NewClientService(notFoundRepo(), okPipefy(), zap.NewNop())
 
 	resp, err := svc.Create(validRequest())
 
@@ -120,7 +121,7 @@ func TestCreateClient_CallsSave(t *testing.T) {
 		return nil
 	}
 
-	svc := NewClientService(repo, okPipefy())
+	svc := NewClientService(repo, okPipefy(), zap.NewNop())
 	svc.Create(validRequest())
 
 	if !saveCalled {
@@ -129,7 +130,7 @@ func TestCreateClient_CallsSave(t *testing.T) {
 }
 
 func TestCreateClient_DuplicateEmail_ReturnsConflict(t *testing.T) {
-	svc := NewClientService(existingEmailRepo(), okPipefy())
+	svc := NewClientService(existingEmailRepo(), okPipefy(), zap.NewNop())
 
 	_, err := svc.Create(validRequest())
 
@@ -139,7 +140,7 @@ func TestCreateClient_DuplicateEmail_ReturnsConflict(t *testing.T) {
 }
 
 func TestCreateClient_SaveFails_ReturnsInternal(t *testing.T) {
-	svc := NewClientService(failingSaveRepo(), okPipefy())
+	svc := NewClientService(failingSaveRepo(), okPipefy(), zap.NewNop())
 
 	_, err := svc.Create(validRequest())
 
@@ -149,7 +150,7 @@ func TestCreateClient_SaveFails_ReturnsInternal(t *testing.T) {
 }
 
 func TestCreateClient_PipefyFails_ReturnsInternal(t *testing.T) {
-	svc := NewClientService(notFoundRepo(), failingPipefy())
+	svc := NewClientService(notFoundRepo(), failingPipefy(), zap.NewNop())
 
 	_, err := svc.Create(validRequest())
 
@@ -194,7 +195,7 @@ func TestCreateClient_PriorityAppliedOnCreate(t *testing.T) {
 		req := validRequest()
 		req.ValorPatrimonio = tc.value
 
-		svc := NewClientService(notFoundRepo(), okPipefy())
+		svc := NewClientService(notFoundRepo(), okPipefy(), zap.NewNop())
 		resp, err := svc.Create(req)
 		if err != nil {
 			t.Fatalf("valor %.0f: unexpected error %v", tc.value, err)

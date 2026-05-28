@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"github.com/jalvess021/capital-pipefy/internal/apperrors"
 	"github.com/jalvess021/capital-pipefy/internal/domain"
 	"github.com/jalvess021/capital-pipefy/internal/dto"
@@ -86,7 +87,7 @@ func failingPipefy() *mockPipefy {
 func setupClientRouter(repo *mockClientRepo, pipefy *mockPipefy) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
-	svc := service.NewClientService(repo, pipefy)
+	svc := service.NewClientService(repo, pipefy, zap.NewNop())
 	h := handler.NewClientHandler(svc)
 	r.POST("/clientes", h.Create)
 	return r

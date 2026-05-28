@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"go.uber.org/zap"
 	"github.com/jalvess021/capital-pipefy/internal/apperrors"
 	"github.com/jalvess021/capital-pipefy/internal/domain"
 	"github.com/jalvess021/capital-pipefy/internal/dto"
@@ -77,6 +78,7 @@ func TestProcessCardUpdated_Success(t *testing.T) {
 	svc := NewWebhookService(
 		clientRepoWithEmail("joao@example.com", 100_000),
 		newEventRepo(),
+		zap.NewNop(),
 	)
 
 	if err := svc.ProcessCardUpdated(webhookRequest()); err != nil {
@@ -95,7 +97,7 @@ func TestProcessCardUpdated_CallsUpdateStatus(t *testing.T) {
 		return nil
 	}
 
-	svc := NewWebhookService(repo, newEventRepo())
+	svc := NewWebhookService(repo, newEventRepo(), zap.NewNop())
 	svc.ProcessCardUpdated(webhookRequest())
 
 	if !updateCalled {
@@ -104,7 +106,7 @@ func TestProcessCardUpdated_CallsUpdateStatus(t *testing.T) {
 }
 
 func TestProcessCardUpdated_DuplicateEventID_ReturnsConflict(t *testing.T) {
-	svc := NewWebhookService(clientRepoWithEmail("joao@example.com", 100_000), duplicateEventRepo())
+	svc := NewWebhookService(clientRepoWithEmail("joao@example.com", 100_000), duplicateEventRepo(), zap.NewNop())
 
 	err := svc.ProcessCardUpdated(webhookRequest())
 
@@ -114,7 +116,7 @@ func TestProcessCardUpdated_DuplicateEventID_ReturnsConflict(t *testing.T) {
 }
 
 func TestProcessCardUpdated_ClientNotFound_ReturnsNotFound(t *testing.T) {
-	svc := NewWebhookService(absentClientRepo(), newEventRepo())
+	svc := NewWebhookService(absentClientRepo(), newEventRepo(), zap.NewNop())
 
 	err := svc.ProcessCardUpdated(webhookRequest())
 

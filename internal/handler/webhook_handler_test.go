@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"github.com/jalvess021/capital-pipefy/internal/domain"
 	"github.com/jalvess021/capital-pipefy/internal/handler"
 	"github.com/jalvess021/capital-pipefy/internal/service"
@@ -65,7 +66,7 @@ func absentClientRepo() *mockClientRepo {
 func setupWebhookRouter(clientRepo *mockClientRepo, eventRepo *mockEventRepo) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
-	svc := service.NewWebhookService(clientRepo, eventRepo)
+	svc := service.NewWebhookService(clientRepo, eventRepo, zap.NewNop())
 	h := handler.NewWebhookHandler(svc)
 	r.POST("/webhooks/pipefy/card-updated", h.CardUpdated)
 	return r
