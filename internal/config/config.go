@@ -19,7 +19,7 @@ func Load() (*Config, error) {
 
     port := os.Getenv("PORT")
     if port == "" {
-        port = "8282"
+        port = "8080"
     }
 
     cfg := &Config{
