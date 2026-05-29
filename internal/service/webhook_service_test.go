@@ -10,33 +10,29 @@ import (
 	"github.com/jalvess021/capital-pipefy/internal/dto"
 )
 
-// --- mocks ---
+// --- mock ---
 
 type mockEventRepo struct {
-	existsByEventIDFn func(eventID string) (bool, error)
-	saveFn            func(event *domain.ProcessedEvent) error
+	saveIfNotExistsFn func(event *domain.ProcessedEvent) error
 }
 
-func (m *mockEventRepo) ExistsByEventID(eventID string) (bool, error) {
-	return m.existsByEventIDFn(eventID)
-}
-func (m *mockEventRepo) Save(event *domain.ProcessedEvent) error {
-	return m.saveFn(event)
+func (m *mockEventRepo) SaveIfNotExists(event *domain.ProcessedEvent) error {
+	return m.saveIfNotExistsFn(event)
 }
 
 // --- mock factories ---
 
 func newEventRepo() *mockEventRepo {
 	return &mockEventRepo{
-		existsByEventIDFn: func(eventID string) (bool, error) { return false, nil },
-		saveFn:            func(event *domain.ProcessedEvent) error { return nil },
+		saveIfNotExistsFn: func(event *domain.ProcessedEvent) error { return nil },
 	}
 }
 
 func duplicateEventRepo() *mockEventRepo {
 	return &mockEventRepo{
-		existsByEventIDFn: func(eventID string) (bool, error) { return true, nil },
-		saveFn:            func(event *domain.ProcessedEvent) error { return nil },
+		saveIfNotExistsFn: func(event *domain.ProcessedEvent) error {
+			return errors.Join(errors.New("duplicate"), apperrors.ErrConflict)
+		},
 	}
 }
 
