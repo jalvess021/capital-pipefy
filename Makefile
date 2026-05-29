@@ -1,4 +1,4 @@
-.PHONY: dev prod down test
+.PHONY: dev prod down test load-test-clients load-test-webhook
 
 dev:
 	@[ -f .env ] || cp .env.example .env
@@ -10,6 +10,12 @@ prod:
 
 down:
 	docker compose --profile dev --profile prod down --remove-orphans
+
+load-test-clients:
+	k6 run test/k6/create_client.js
+
+load-test-webhook:
+	k6 run test/k6/webhook.js
 
 test:
 	docker exec capital-pipefy-api-dev-1 sh -c \
