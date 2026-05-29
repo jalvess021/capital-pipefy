@@ -20,7 +20,10 @@ services:
     restart: unless-stopped
 
   redis:
-    profiles: [full]
+    image: redis:7-alpine
+    networks:
+      - capital-pipefy-net
+    restart: unless-stopped
 
   rabbitmq:
     profiles: [full]
