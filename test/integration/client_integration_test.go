@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jalvess021/capital-pipefy/internal/config"
 	"github.com/jalvess021/capital-pipefy/internal/database"
 	"github.com/jalvess021/capital-pipefy/internal/domain"
 	postgresrepo "github.com/jalvess021/capital-pipefy/internal/repository/postgres"
@@ -22,7 +23,7 @@ func setupDB(t *testing.T) *database.PostgresDB {
 	if url == "" {
 		t.Skip("DATABASE_URL not set — skipping integration test")
 	}
-	db, err := database.NewPostgres(url)
+	db, err := database.NewPostgres(config.DatabaseConfig{URL: url, MaxOpenConns: 5, MaxIdleConns: 2, ConnMaxLifetime: time.Minute})
 	if err != nil {
 		t.Fatalf("failed to connect to database: %v", err)
 	}
