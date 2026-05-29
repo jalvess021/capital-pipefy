@@ -22,7 +22,7 @@ func buildProviders(db *database.PostgresDB, cfg *config.Config, log *zap.Logger
 	pipefy := pipefyclient.NewClient(cfg.PipefyAPIURL, cfg.PipefyToken, cfg.PipefyPipeID)
 
 	clientSvc := service.NewClientService(clientRepo, pipefy, log)
-	webhookSvc := service.NewWebhookService(clientRepo, eventRepo, log)
+	webhookSvc := service.NewWebhookService(clientRepo, eventRepo, pipefy, log)
 
 	return &Providers{
 		ClientHandler:  handler.NewClientHandler(clientSvc),

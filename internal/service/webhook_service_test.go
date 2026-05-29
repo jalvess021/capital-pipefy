@@ -78,6 +78,7 @@ func TestProcessCardUpdated_Success(t *testing.T) {
 	svc := NewWebhookService(
 		clientRepoWithEmail("joao@example.com", 100_000),
 		newEventRepo(),
+		okPipefy(),
 		zap.NewNop(),
 	)
 
@@ -97,7 +98,7 @@ func TestProcessCardUpdated_CallsUpdateStatus(t *testing.T) {
 		return nil
 	}
 
-	svc := NewWebhookService(repo, newEventRepo(), zap.NewNop())
+	svc := NewWebhookService(repo, newEventRepo(), okPipefy(), zap.NewNop())
 	svc.ProcessCardUpdated(webhookRequest())
 
 	if !updateCalled {
@@ -106,7 +107,7 @@ func TestProcessCardUpdated_CallsUpdateStatus(t *testing.T) {
 }
 
 func TestProcessCardUpdated_DuplicateEventID_ReturnsConflict(t *testing.T) {
-	svc := NewWebhookService(clientRepoWithEmail("joao@example.com", 100_000), duplicateEventRepo(), zap.NewNop())
+	svc := NewWebhookService(clientRepoWithEmail("joao@example.com", 100_000), duplicateEventRepo(), okPipefy(), zap.NewNop())
 
 	err := svc.ProcessCardUpdated(webhookRequest())
 
@@ -116,7 +117,7 @@ func TestProcessCardUpdated_DuplicateEventID_ReturnsConflict(t *testing.T) {
 }
 
 func TestProcessCardUpdated_ClientNotFound_ReturnsNotFound(t *testing.T) {
-	svc := NewWebhookService(absentClientRepo(), newEventRepo(), zap.NewNop())
+	svc := NewWebhookService(absentClientRepo(), newEventRepo(), okPipefy(), zap.NewNop())
 
 	err := svc.ProcessCardUpdated(webhookRequest())
 
