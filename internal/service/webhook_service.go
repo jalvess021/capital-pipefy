@@ -66,11 +66,10 @@ func (s *WebhookService) ProcessCardUpdated(req dto.CardUpdatedWebhookRequest) e
 	}
 
 	if err := s.pipefy.UpdateCardField(context.Background(), req.CardID, "status", "Processado"); err != nil {
-		logger.WebhookError(s.log, "failed to sync card status to pipefy", err,
+		logger.WebhookError(s.log, "pipefy sync failed (best-effort, event saved)", err,
 			zap.String("event_id", req.EventID),
 			zap.String("card_id", req.CardID),
 		)
-		return fmt.Errorf("failed to sync card to pipefy: %w", apperrors.ErrInternal)
 	}
 
 	event := &domain.ProcessedEvent{

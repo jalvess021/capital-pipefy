@@ -149,13 +149,16 @@ func TestCreateClient_SaveFails_ReturnsInternal(t *testing.T) {
 	}
 }
 
-func TestCreateClient_PipefyFails_ReturnsInternal(t *testing.T) {
+func TestCreateClient_PipefyFails_StillReturnsClient(t *testing.T) {
 	svc := NewClientService(notFoundRepo(), failingPipefy(), zap.NewNop())
 
-	_, err := svc.Create(validRequest())
+	resp, err := svc.Create(validRequest())
 
-	if !errors.Is(err, apperrors.ErrInternal) {
-		t.Errorf("expected ErrInternal on pipefy failure, got %v", err)
+	if err != nil {
+		t.Fatalf("expected no error (best-effort), got %v", err)
+	}
+	if resp == nil {
+		t.Fatal("expected client response, got nil")
 	}
 }
 

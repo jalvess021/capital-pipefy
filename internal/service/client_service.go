@@ -46,10 +46,9 @@ func (s *ClientService) Create(req dto.CreateClientRequest) (*dto.ClientResponse
 	}
 
 	if err := s.pipefy.CreateCard(context.Background(), client.Nome, client.Email, client.ValorPatrimonio); err != nil {
-		logger.RequestError(s.log, "failed to sync card to pipefy", err,
+		logger.RequestError(s.log, "pipefy sync failed (best-effort, client saved)", err,
 			zap.String("email", client.Email),
 		)
-		return nil, fmt.Errorf("failed to sync card to pipefy: %w", apperrors.ErrInternal)
 	}
 
 	logger.RequestInfo(s.log, "client created",
