@@ -137,3 +137,43 @@ func TestWebhookHandler_CardUpdated_InvalidPayload_Returns400(t *testing.T) {
 		}
 	}
 }
+
+func TestWebhookHandler_Priority_Alta(t *testing.T) {
+	var got string
+	repo := &mockClientRepo{
+		findByEmailFn: func(e string) (*domain.Client, error) {
+			return &domain.Client{Email: e, ValorPatrimonio: 250_000}, nil
+		},
+		updateStatusAndPriorityFn: func(_, _, prioridade string) error {
+			got = prioridade
+			return nil
+		},
+	}
+	w := postJSON(setupWebhookRouter(repo, newEventRepo()), "/webhooks/pipefy/card-updated", validWebhookPayload())
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", w.Code)
+	}
+	if got != "prioridade_alta" {
+		t.Errorf("expected prioridade_alta, got %q", got)
+	}
+}
+
+func TestWebhookHandler_Priority_Normal(t *testing.T) {
+	var got string
+	repo := &mockClientRepo{
+		findByEmailFn: func(e string) (*domain.Client, error) {
+			return &domain.Client{Email: e, ValorPatrimonio: 199_999}, nil
+		},
+		updateStatusAndPriorityFn: func(_, _, prioridade string) error {
+			got = prioridade
+			return nil
+		},
+	}
+	w := postJSON(setupWebhookRouter(repo, newEventRepo()), "/webhooks/pipefy/card-updated", validWebhookPayload())
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", w.Code)
+	}
+	if got != "prioridade_normal" {
+		t.Errorf("expected prioridade_normal, got %q", got)
+	}
+}
