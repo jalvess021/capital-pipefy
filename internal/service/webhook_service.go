@@ -32,6 +32,27 @@ func NewWebhookService(
 }
 
 func (s *WebhookService) ProcessCardUpdated(req dto.CardUpdatedWebhookRequest) error {
+
+	event := &domain.ProcessedEvent{
+		EventID:     req.EventID,
+		CardID:      req.CardID,
+		ProcessedAt: time.Now(),
+	}
+	
+	if err := s.eventRepo.SaveIfNotExists(event); err != nil {
+		if errors.Is(err, apperrors.ErrConflict) {
+			logger.WebhookWarn(s.log, "duplicate event ignored",
+				zap.String("event_id", req.EventID),
+				zap.String("reason", "already processed"),
+			)
+			return fmt.Errorf("duplicate event %s: %w", req.EventID, apperrors.ErrConflict)
+		}
+		logger.WebhookError(s.log, "failed to save processed event", err,
+			zap.String("event_id", req.EventID),
+		)
+		return fmt.Errorf("failed to save event: %w", apperrors.ErrInternal)
+	}
+
 	client, err := s.clientRepo.FindByEmail(req.ClienteEmail)
 	if err != nil {
 		logger.WebhookError(s.log, "client not found", err,
@@ -56,25 +77,6 @@ func (s *WebhookService) ProcessCardUpdated(req dto.CardUpdatedWebhookRequest) e
 			zap.String("event_id", req.EventID),
 			zap.String("card_id", req.CardID),
 		)
-	}
-
-	event := &domain.ProcessedEvent{
-		EventID:     req.EventID,
-		CardID:      req.CardID,
-		ProcessedAt: time.Now(),
-	}
-	if err := s.eventRepo.SaveIfNotExists(event); err != nil {
-		if errors.Is(err, apperrors.ErrConflict) {
-			logger.WebhookWarn(s.log, "duplicate event ignored",
-				zap.String("event_id", req.EventID),
-				zap.String("reason", "already processed"),
-			)
-			return fmt.Errorf("duplicate event %s: %w", req.EventID, apperrors.ErrConflict)
-		}
-		logger.WebhookError(s.log, "failed to save processed event", err,
-			zap.String("event_id", req.EventID),
-		)
-		return fmt.Errorf("failed to save event: %w", apperrors.ErrInternal)
 	}
 
 	logger.WebhookInfo(s.log, "event processed",

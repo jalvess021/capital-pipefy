@@ -1,12 +1,15 @@
 package postgres
 
 import (
-    "fmt"
+	"errors"
+	"fmt"
+	"strings"
 
-    "github.com/jalvess021/capital-pipefy/internal/domain"
-    "github.com/jalvess021/capital-pipefy/internal/repository"
-    "github.com/jalvess021/capital-pipefy/internal/repository/postgres/models"
-    "gorm.io/gorm"
+	"github.com/jalvess021/capital-pipefy/internal/apperrors"
+	"github.com/jalvess021/capital-pipefy/internal/domain"
+	"github.com/jalvess021/capital-pipefy/internal/repository"
+	"github.com/jalvess021/capital-pipefy/internal/repository/postgres/models"
+	"gorm.io/gorm"
 )
 
 type clientRepository struct {
@@ -18,12 +21,15 @@ func NewClientRepository(db *gorm.DB) repository.ClientRepository {
 }
 
 func (r *clientRepository) Save(client *domain.Client) error {
-    m := toClientModel(client)
-    if err := r.db.Create(&m).Error; err != nil {
-        return fmt.Errorf("failed to save client: %w", err)
-    }
-    client.ID = m.ID.String()
-    return nil
+	m := toClientModel(client)
+	if err := r.db.Create(&m).Error; err != nil {
+		if isUniqueViolation(err) {
+			return fmt.Errorf("email already exists: %w", apperrors.ErrConflict)
+		}
+		return fmt.Errorf("failed to save client: %w", err)
+	}
+	client.ID = m.ID.String()
+	return nil
 }
 
 func (r *clientRepository) FindByEmail(email string) (*domain.Client, error) {
@@ -60,15 +66,21 @@ func toClientModel(d *domain.Client) models.ClientModel {
 }
 
 func toClientDomain(m *models.ClientModel) domain.Client {
-    return domain.Client{
-        ID:              m.ID.String(),
-        Nome:            m.Nome,
-        Email:           m.Email,
-        TipoSolicitacao: m.TipoSolicitacao,
-        ValorPatrimonio: m.ValorPatrimonio,
-        Status:          m.Status,
-        Prioridade:      m.Prioridade,
-        CreatedAt:       m.CreatedAt,
-        UpdatedAt:       m.UpdatedAt,
-    }
+	return domain.Client{
+		ID:              m.ID.String(),
+		Nome:            m.Nome,
+		Email:           m.Email,
+		TipoSolicitacao: m.TipoSolicitacao,
+		ValorPatrimonio: m.ValorPatrimonio,
+		Status:          m.Status,
+		Prioridade:      m.Prioridade,
+		CreatedAt:       m.CreatedAt,
+		UpdatedAt:       m.UpdatedAt,
+	}
+}
+
+func isUniqueViolation(err error) bool {
+	return errors.Is(err, gorm.ErrDuplicatedKey) ||
+		strings.Contains(err.Error(), "duplicate key") ||
+		strings.Contains(err.Error(), "unique constraint")
 }
