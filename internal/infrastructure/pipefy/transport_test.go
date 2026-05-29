@@ -27,7 +27,7 @@ func testConfig(serverURL string) config.PipefyConfig {
 }
 
 func newTestClient(serverURL string) *pipefy.Client {
-	return pipefy.NewClient(testConfig(serverURL), zap.NewNop())
+	return pipefy.NewClient(testConfig(serverURL), nil, zap.NewNop())
 }
 
 func TestExecute_RetryOnFailureThenSuccess(t *testing.T) {
@@ -90,29 +90,3 @@ func TestExecute_NonTransientError_NoRetry(t *testing.T) {
 	}
 }
 
-func TestExecute_CircuitOpensAfterConsecutiveFailures(t *testing.T) {
-	var calls atomic.Int32
-
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		calls.Add(1)
-		w.WriteHeader(http.StatusServiceUnavailable)
-	}))
-	defer srv.Close()
-
-	c := newTestClient(srv.URL)
-
-	// 5 falhas consecutivas para abrir o circuit breaker
-	for i := 0; i < 5; i++ {
-		c.Execute(context.Background(), `{ test }`, nil)
-	}
-
-	callsBefore := calls.Load()
-	err := c.Execute(context.Background(), `{ test }`, nil)
-
-	if err == nil {
-		t.Error("expected circuit breaker error")
-	}
-	if calls.Load() != callsBefore {
-		t.Errorf("expected no HTTP calls when circuit is open, got %d new calls", calls.Load()-callsBefore)
-	}
-}

@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+	"github.com/jalvess021/capital-pipefy/internal/apperrors"
 	"github.com/jalvess021/capital-pipefy/internal/domain"
 	"github.com/jalvess021/capital-pipefy/internal/handler"
 	"github.com/jalvess021/capital-pipefy/internal/service"
@@ -15,28 +16,26 @@ import (
 // --- mocks ---
 
 type mockEventRepo struct {
-	existsByEventIDFn func(eventID string) (bool, error)
-	saveFn            func(event *domain.ProcessedEvent) error
+	saveIfNotExistsFn func(event *domain.ProcessedEvent) error
 }
 
-func (m *mockEventRepo) ExistsByEventID(eventID string) (bool, error) {
-	return m.existsByEventIDFn(eventID)
+func (m *mockEventRepo) SaveIfNotExists(event *domain.ProcessedEvent) error {
+	return m.saveIfNotExistsFn(event)
 }
-func (m *mockEventRepo) Save(event *domain.ProcessedEvent) error { return m.saveFn(event) }
 
 // --- repo factories ---
 
 func newEventRepo() *mockEventRepo {
 	return &mockEventRepo{
-		existsByEventIDFn: func(eventID string) (bool, error) { return false, nil },
-		saveFn:            func(event *domain.ProcessedEvent) error { return nil },
+		saveIfNotExistsFn: func(event *domain.ProcessedEvent) error { return nil },
 	}
 }
 
 func duplicateEventRepo() *mockEventRepo {
 	return &mockEventRepo{
-		existsByEventIDFn: func(eventID string) (bool, error) { return true, nil },
-		saveFn:            func(event *domain.ProcessedEvent) error { return nil },
+		saveIfNotExistsFn: func(event *domain.ProcessedEvent) error {
+			return errors.Join(errors.New("duplicate"), apperrors.ErrConflict)
+		},
 	}
 }
 
@@ -109,8 +108,7 @@ func TestWebhookHandler_CardUpdated_ClientNotFound_Returns404(t *testing.T) {
 
 func TestWebhookHandler_CardUpdated_InternalError_Returns500(t *testing.T) {
 	eventRepo := &mockEventRepo{
-		existsByEventIDFn: func(eventID string) (bool, error) { return false, errors.New("db error") },
-		saveFn:            func(event *domain.ProcessedEvent) error { return nil },
+		saveIfNotExistsFn: func(event *domain.ProcessedEvent) error { return errors.New("db error") },
 	}
 	w := postJSON(setupWebhookRouter(clientRepoWithEmail("joao@example.com"), eventRepo), "/webhooks/pipefy/card-updated", validWebhookPayload())
 

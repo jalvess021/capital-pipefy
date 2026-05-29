@@ -7,7 +7,6 @@ require (
 	github.com/go-redis/redis_rate/v10 v10.0.1
 	github.com/google/uuid v1.6.0
 	github.com/redis/go-redis/v9 v9.20.0
-	github.com/sony/gobreaker v1.0.0
 	github.com/swaggo/files v1.0.1
 	github.com/swaggo/gin-swagger v1.6.1
 	github.com/swaggo/swag v1.16.6
