@@ -1,47 +1,88 @@
 package config
 
 import (
-    "fmt"
-    "os"
+	"fmt"
+	"os"
+	"strconv"
+	"time"
 )
 
+type PipefyConfig struct {
+	APIURL           string
+	Token            string
+	PipeID           string
+	HTTPTimeout      time.Duration
+	MaxRetries       int
+	RetryDelay       time.Duration
+	CBThreshold      uint32
+	CBOpenTimeout    time.Duration
+}
+
 type Config struct {
-    Port         string
-    DatabaseURL  string
-    RedisURL     string
-    RabbitMQURL  string
-    PipefyPipeID string
-    PipefyAPIURL string
-    PipefyToken  string
+	Port        string
+	DatabaseURL string
+	RedisURL    string
+	RabbitMQURL string
+	Pipefy      PipefyConfig
 }
 
 func Load() (*Config, error) {
+	cfg := &Config{
+		Port:        os.Getenv("PORT"),
+		DatabaseURL: os.Getenv("DATABASE_URL"),
+		RedisURL:    os.Getenv("REDIS_URL"),
+		RabbitMQURL: os.Getenv("RABBITMQ_URL"),
+		Pipefy: PipefyConfig{
+			APIURL:        os.Getenv("PIPEFY_API_URL"),
+			Token:         os.Getenv("PIPEFY_TOKEN"),
+			PipeID:        os.Getenv("PIPEFY_PIPE_ID"),
+			HTTPTimeout:   parseDuration("PIPEFY_HTTP_TIMEOUT", 10*time.Second),
+			MaxRetries:    parseInt("PIPEFY_MAX_RETRIES", 3),
+			RetryDelay:    parseDuration("PIPEFY_RETRY_DELAY", 500*time.Millisecond),
+			CBThreshold:   uint32(parseInt("PIPEFY_CB_THRESHOLD", 5)),
+			CBOpenTimeout: parseDuration("PIPEFY_CB_OPEN_TIMEOUT", 30*time.Second),
+		},
+	}
 
-    cfg := &Config{
-        Port:         os.Getenv("PORT"),
-        DatabaseURL:  os.Getenv("DATABASE_URL"),
-        RedisURL:     os.Getenv("REDIS_URL"),
-        RabbitMQURL:  os.Getenv("RABBITMQ_URL"),
-        PipefyPipeID: os.Getenv("PIPEFY_PIPE_ID"),
-        PipefyAPIURL: os.Getenv("PIPEFY_API_URL"),
-        PipefyToken:  os.Getenv("PIPEFY_TOKEN"),
-    }
+	if cfg.Port == "" {
+		return nil, fmt.Errorf("PORT is required")
+	}
+	if cfg.DatabaseURL == "" {
+		return nil, fmt.Errorf("DATABASE_URL is required")
+	}
+	if cfg.Pipefy.APIURL == "" {
+		return nil, fmt.Errorf("PIPEFY_API_URL is required")
+	}
+	if cfg.Pipefy.Token == "" {
+		return nil, fmt.Errorf("PIPEFY_TOKEN is required")
+	}
+	if cfg.Pipefy.PipeID == "" {
+		return nil, fmt.Errorf("PIPEFY_PIPE_ID is required")
+	}
 
-    if cfg.Port == "" {
-        return nil, fmt.Errorf("PORT is required")
-    }
-    if cfg.DatabaseURL == "" {
-        return nil, fmt.Errorf("DATABASE_URL is required")
-    }
-    if cfg.PipefyAPIURL == "" {
-        return nil, fmt.Errorf("PIPEFY_API_URL is required")
-    }
-    if cfg.PipefyToken == "" {
-        return nil, fmt.Errorf("PIPEFY_TOKEN is required")
-    }
-    if cfg.PipefyPipeID == "" {
-        return nil, fmt.Errorf("PIPEFY_PIPE_ID is required")
-    }
+	return cfg, nil
+}
 
-    return cfg, nil
+func parseDuration(env string, fallback time.Duration) time.Duration {
+	v := os.Getenv(env)
+	if v == "" {
+		return fallback
+	}
+	d, err := time.ParseDuration(v)
+	if err != nil {
+		return fallback
+	}
+	return d
+}
+
+func parseInt(env string, fallback int) int {
+	v := os.Getenv(env)
+	if v == "" {
+		return fallback
+	}
+	n, err := strconv.Atoi(v)
+	if err != nil {
+		return fallback
+	}
+	return n
 }
