@@ -13,5 +13,5 @@ down:
 
 test:
 	docker exec capital-pipefy-api-dev-1 sh -c \
-	  "go test ./internal/... -v && \
+	  "go test ./internal/handler/... ./internal/service/... ./internal/infrastructure/... -v && \
 	   go test -tags=integration ./test/integration/... -v"
