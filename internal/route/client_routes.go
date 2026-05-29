@@ -7,7 +7,7 @@ import (
 
 func registerClientRoutes(r *gin.Engine, h *handler.ClientHandler) {
 	{
-		clients := r.Group("/clients")
+		clients := r.Group("/clientes")
 		{
 			clients.POST("", h.Create)
 		}

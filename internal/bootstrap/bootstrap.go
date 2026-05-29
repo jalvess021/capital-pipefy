@@ -10,6 +10,7 @@ type App struct {
 	Config    *config.Config
 	DB        *database.PostgresDB
 	Providers *Providers
+	Log       *zap.Logger
 }
 
 func NewApp(log *zap.Logger) (*App, error) {
@@ -18,7 +19,7 @@ func NewApp(log *zap.Logger) (*App, error) {
 		return nil, err
 	}
 
-	db, err := database.NewPostgres(cfg.DatabaseURL)
+	db, err := database.NewPostgres(cfg.Database)
 	if err != nil {
 		return nil, err
 	}
@@ -27,5 +28,6 @@ func NewApp(log *zap.Logger) (*App, error) {
 		Config:    cfg,
 		DB:        db,
 		Providers: buildProviders(db, cfg, log),
+		Log:       log,
 	}, nil
 }
