@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -9,21 +10,24 @@ import (
 	"github.com/jalvess021/capital-pipefy/internal/domain"
 	"github.com/jalvess021/capital-pipefy/internal/dto"
 	"github.com/jalvess021/capital-pipefy/internal/logger"
+	"github.com/jalvess021/capital-pipefy/internal/port"
 	"github.com/jalvess021/capital-pipefy/internal/repository"
 )
 
 type WebhookService struct {
 	clientRepo repository.ClientRepository
 	eventRepo  repository.EventRepository
+	pipefy     port.Pipefy
 	log        *zap.Logger
 }
 
 func NewWebhookService(
 	clientRepo repository.ClientRepository,
 	eventRepo repository.EventRepository,
+	pipefy port.Pipefy,
 	log *zap.Logger,
 ) *WebhookService {
-	return &WebhookService{clientRepo: clientRepo, eventRepo: eventRepo, log: log}
+	return &WebhookService{clientRepo: clientRepo, eventRepo: eventRepo, pipefy: pipefy, log: log}
 }
 
 func (s *WebhookService) ProcessCardUpdated(req dto.CardUpdatedWebhookRequest) error {
@@ -59,6 +63,14 @@ func (s *WebhookService) ProcessCardUpdated(req dto.CardUpdatedWebhookRequest) e
 			zap.String("cliente_email", req.ClienteEmail),
 		)
 		return fmt.Errorf("failed to update client: %w", apperrors.ErrInternal)
+	}
+
+	if err := s.pipefy.UpdateCardField(context.Background(), req.CardID, "status", "Processado"); err != nil {
+		logger.WebhookError(s.log, "failed to sync card status to pipefy", err,
+			zap.String("event_id", req.EventID),
+			zap.String("card_id", req.CardID),
+		)
+		return fmt.Errorf("failed to sync card to pipefy: %w", apperrors.ErrInternal)
 	}
 
 	event := &domain.ProcessedEvent{
