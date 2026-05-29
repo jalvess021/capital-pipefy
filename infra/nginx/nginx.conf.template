@@ -1,0 +1,30 @@
+limit_req_zone $binary_remote_addr zone=api_limit:10m rate=${NGINX_RATE_LIMIT_RPS}r/s;
+
+upstream api {
+    server ${API_HOST}:${PORT};
+    keepalive 32;
+}
+
+server {
+    listen 80;
+
+    # Block oversized payloads
+    client_max_body_size 1m;
+
+    # Timeouts
+    proxy_connect_timeout 5s;
+    proxy_read_timeout    30s;
+
+    # Rate limiting
+    limit_req zone=api_limit burst=${NGINX_RATE_LIMIT_BURST} nodelay;
+    limit_req_status 429;
+
+    location / {
+        proxy_pass         http://api;
+        proxy_http_version 1.1;
+        proxy_set_header   Connection        "";
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+    }
+}
