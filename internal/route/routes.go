@@ -2,6 +2,7 @@ package route
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	swaggerfiles "github.com/swaggo/files"
@@ -13,8 +14,10 @@ import (
 )
 
 func SetupRouter(app *bootstrap.App) *gin.Engine {
-	router := gin.Default()
-
+	router := gin.New()
+	router.Use(gin.Recovery())
+	router.Use(middleware.RequestID())
+	router.Use(requestLogger(app.Log))
 	applyRateLimiter(router, app)
 
 	router.GET("/", func(c *gin.Context) {
@@ -26,6 +29,22 @@ func SetupRouter(app *bootstrap.App) *gin.Engine {
 	registerWebhookRoutes(router, app.Providers.WebhookHandler)
 
 	return router
+}
+
+func requestLogger(log *zap.Logger) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		start := time.Now()
+		c.Next()
+		reqID, _ := c.Get(middleware.RequestIDKey)
+		logger.RequestInfo(log, "request",
+			zap.String("request_id", reqID.(string)),
+			zap.String("method", c.Request.Method),
+			zap.String("path", c.Request.URL.Path),
+			zap.Int("status", c.Writer.Status()),
+			zap.Duration("latency", time.Since(start)),
+			zap.String("ip", c.ClientIP()),
+		)
+	}
 }
 
 func applyRateLimiter(r *gin.Engine, app *bootstrap.App) {
