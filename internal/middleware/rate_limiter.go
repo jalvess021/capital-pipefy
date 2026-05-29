@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis_rate/v10"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"github.com/jalvess021/capital-pipefy/internal/logger"
@@ -14,9 +15,9 @@ import (
 
 // Mesmo contador para varias instancias do app
 type RateLimiter struct {
-	redis *redis.Client
-	limit int
-	log   *zap.Logger
+	limiter *redis_rate.Limiter
+	limit   int
+	log     *zap.Logger
 }
 
 func NewRateLimiter(redisURL string, rps int, log *zap.Logger) (*RateLimiter, error) {
@@ -33,16 +34,16 @@ func NewRateLimiter(redisURL string, rps int, log *zap.Logger) (*RateLimiter, er
 		return nil, fmt.Errorf("failed to connect to redis: %w", err)
 	}
 
-	return &RateLimiter{redis: client, limit: rps, log: log}, nil
+	return &RateLimiter{limiter: redis_rate.NewLimiter(client), limit: rps, log: log}, nil
 }
 
 func (rl *RateLimiter) Handle() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ip := c.ClientIP()
-		key := fmt.Sprintf("rate:%s", ip)
 		ctx := c.Request.Context()
 
-		count, err := rl.redis.Incr(ctx, key).Result()
+		limit := redis_rate.Limit{Rate: rl.limit, Burst: rl.limit * 2, Period: time.Second}
+		res, err := rl.limiter.Allow(ctx, fmt.Sprintf("rate:%s", ip), limit)
 		if err != nil {
 			logger.InfraWarn(rl.log, "redis unavailable, skipping rate limit",
 				zap.Error(err),
@@ -51,15 +52,11 @@ func (rl *RateLimiter) Handle() gin.HandlerFunc {
 			return
 		}
 
-		if count == 1 {
-			rl.redis.Expire(ctx, key, time.Second)
-		}
-
-		if int(count) > rl.limit {
+		if res.Allowed == 0 {
 			logger.RequestWarn(rl.log, "request blocked",
 				zap.String("ip", ip),
 				zap.String("reason", "rate_limit_exceeded"),
-				zap.Int64("count", count),
+				zap.Int("remaining", res.Remaining),
 				zap.Int("limit", rl.limit),
 			)
 			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{

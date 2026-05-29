@@ -29,6 +29,10 @@ func SetupRouter(app *bootstrap.App) *gin.Engine {
 }
 
 func applyRateLimiter(r *gin.Engine, app *bootstrap.App) {
+	if !app.Config.RateLimit.Enabled {
+		logger.ApplicationWarn(app.Log, "rate limiter disabled, RATE_LIMIT_ENABLED=false")
+		return
+	}
 	if app.Config.RateLimit.RedisURL == "" {
 		logger.ApplicationWarn(app.Log, "rate limiter disabled, REDIS_URL not set")
 		return

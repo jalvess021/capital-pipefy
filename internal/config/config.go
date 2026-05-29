@@ -28,6 +28,7 @@ type DatabaseConfig struct {
 type RateLimitConfig struct {
 	RedisURL string
 	RPS      int
+	Enabled  bool
 }
 
 type Config struct {
@@ -44,13 +45,14 @@ func Load() (*Config, error) {
 		RabbitMQURL: os.Getenv("RABBITMQ_URL"),
 		Database: DatabaseConfig{
 			URL:             os.Getenv("DATABASE_URL"),
-			MaxOpenConns:    parseInt("DB_MAX_OPEN_CONNS", 25),
+			MaxOpenConns:    parseInt("DB_MAX_OPEN_CONNS", 100),
 			MaxIdleConns:    parseInt("DB_MAX_IDLE_CONNS", 5),
 			ConnMaxLifetime: parseDuration("DB_CONN_MAX_LIFETIME", 5*time.Minute),
 		},
 		RateLimit: RateLimitConfig{
 			RedisURL: os.Getenv("REDIS_URL"),
 			RPS:      parseInt("RATE_LIMIT_RPS", 10),
+			Enabled:  parseBool("RATE_LIMIT_ENABLED", true),
 		},
 		Pipefy: PipefyConfig{
 			APIURL:        os.Getenv("PIPEFY_API_URL"),
@@ -93,6 +95,14 @@ func parseDuration(env string, fallback time.Duration) time.Duration {
 		return fallback
 	}
 	return d
+}
+
+func parseBool(env string, fallback bool) bool {
+	v := os.Getenv(env)
+	if v == "" {
+		return fallback
+	}
+	return v == "true" || v == "1"
 }
 
 func parseInt(env string, fallback int) int {
