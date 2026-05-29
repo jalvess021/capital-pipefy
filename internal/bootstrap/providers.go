@@ -19,7 +19,7 @@ func buildProviders(db *database.PostgresDB, cfg *config.Config, log *zap.Logger
 	clientRepo := postgresrepo.NewClientRepository(db.GormDB())
 	eventRepo := postgresrepo.NewEventRepository(db.GormDB())
 
-	pipefy := pipefyclient.NewClient(cfg.PipefyAPIURL, cfg.PipefyToken, cfg.PipefyPipeID)
+	pipefy := pipefyclient.NewClient(cfg.Pipefy, log)
 
 	clientSvc := service.NewClientService(clientRepo, pipefy, log)
 	webhookSvc := service.NewWebhookService(clientRepo, eventRepo, pipefy, log)
