@@ -29,6 +29,42 @@ services:
   rabbitmq:
     profiles: [full]
 
+  # --- Monitoring ---
+  loki:
+    image: grafana/loki:2.9.0
+    command: -config.file=/etc/loki/loki.yml
+    volumes:
+      - ./infra/loki/loki.yml:/etc/loki/loki.yml:ro
+      - loki_data:/loki
+    networks:
+      - capital-pipefy-net
+
+  promtail:
+    image: grafana/promtail:2.9.0
+    command: -config.file=/etc/promtail/promtail.yml
+    volumes:
+      - ./infra/promtail/promtail.yml:/etc/promtail/promtail.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - loki
+    networks:
+      - capital-pipefy-net
+
+  grafana:
+    image: grafana/grafana:10.0.0
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    volumes:
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - loki
+    networks:
+      - capital-pipefy-net
+
   # --- Tooling ---
   migrate:
     profiles: [dev]
@@ -115,6 +151,8 @@ volumes:
   postgres_data:
   redis_data:
   rabbitmq_data:
+  loki_data:
+  grafana_data:
 
 networks:
   capital-pipefy-net:
