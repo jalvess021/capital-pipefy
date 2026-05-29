@@ -1,0 +1,136 @@
+{
+  "title": "Capital Pipefy — Observabilidade",
+  "uid": "capital-pipefy-logs",
+  "schemaVersion": 38,
+  "refresh": "5s",
+  "time": { "from": "now-15m", "to": "now" },
+  "panels": [
+    {
+      "id": 1, "title": "⚡ Requisições / min",
+      "type": "timeseries", "gridPos": { "h": 5, "w": 8, "x": 0, "y": 0 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [{ "expr": "sum(rate({service=\"api-dev\"} | json | type=\"request\" [1m])) * 60", "legendFormat": "req/min", "refId": "A" }],
+      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "green" }, "custom": { "lineWidth": 2 } } }
+    },
+    {
+      "id": 2, "title": "🔴 Erros / min",
+      "type": "timeseries", "gridPos": { "h": 5, "w": 8, "x": 8, "y": 0 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [{ "expr": "sum(rate({service=\"api-dev\"} | json | level=\"error\" [1m])) * 60", "legendFormat": "errors/min", "refId": "A" }],
+      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "red" }, "custom": { "lineWidth": 2 } } }
+    },
+    {
+      "id": 3, "title": "⚙️ Falhas Pipefy / min",
+      "type": "timeseries", "gridPos": { "h": 5, "w": 8, "x": 16, "y": 0 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [{ "expr": "sum(rate({service=\"api-dev\"} | json | type=\"infrastructure\" | level=\"error\" [1m])) * 60", "legendFormat": "pipefy errors/min", "refId": "A" }],
+      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "orange" }, "custom": { "lineWidth": 2 } } }
+    },
+
+    { "id": 10, "title": "── 🚀 APPLICATION ──────────────────────────────────────────────────────────────────────────────────────────", "type": "text", "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 }, "options": { "content": "", "mode": "markdown" } },
+
+    {
+      "id": 11, "title": "✅ Application — INFO",
+      "type": "logs", "gridPos": { "h": 6, "w": 8, "x": 0, "y": 6 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [{ "expr": "{service=\"api-dev\"} | json | type=\"application\" | level=\"info\" | line_format \"{{.message}}\"", "refId": "A" }],
+      "options": { "showTime": true, "showLabels": false, "wrapLogMessage": false, "sortOrder": "Descending" }
+    },
+    {
+      "id": 12, "title": "⚠️ Application — WARN",
+      "type": "logs", "gridPos": { "h": 6, "w": 8, "x": 8, "y": 6 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [{ "expr": "{service=\"api-dev\"} | json | type=\"application\" | level=\"warn\" | line_format \"{{.message}}\"", "refId": "A" }],
+      "options": { "showTime": true, "showLabels": false, "wrapLogMessage": false, "sortOrder": "Descending" }
+    },
+    {
+      "id": 13, "title": "🔴 Application — ERROR",
+      "type": "logs", "gridPos": { "h": 6, "w": 8, "x": 16, "y": 6 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [{ "expr": "{service=\"api-dev\"} | json | type=\"application\" | level=\"error\" | line_format \"{{.message}} | {{.error}}\"", "refId": "A" }],
+      "options": { "showTime": true, "showLabels": false, "wrapLogMessage": true, "sortOrder": "Descending" }
+    },
+
+    { "id": 20, "title": "── 🌐 HTTP REQUESTS ────────────────────────────────────────────────────────────────────────────────────────", "type": "text", "gridPos": { "h": 1, "w": 24, "x": 0, "y": 12 }, "options": { "content": "", "mode": "markdown" } },
+
+    {
+      "id": 21, "title": "✅ HTTP — 2xx",
+      "type": "logs", "gridPos": { "h": 7, "w": 8, "x": 0, "y": 13 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [{ "expr": "{service=\"api-dev\"} | json | type=\"request\" | source=\"router\" | level=\"info\" | line_format \"[{{.status}}] {{.method}} {{.path}} — {{.latency}} | {{.request_id}}\"", "refId": "A" }],
+      "options": { "showTime": true, "showLabels": false, "wrapLogMessage": false, "sortOrder": "Descending" }
+    },
+    {
+      "id": 22, "title": "⚠️ HTTP — 4xx (warn)",
+      "type": "logs", "gridPos": { "h": 7, "w": 8, "x": 8, "y": 13 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [{ "expr": "{service=\"api-dev\"} | json | type=\"request\" | source=\"router\" | level=\"warn\" | line_format \"[{{.status}}] {{.method}} {{.path}} — {{.latency}} | {{.request_id}}\"", "refId": "A" }],
+      "options": { "showTime": true, "showLabels": false, "wrapLogMessage": false, "sortOrder": "Descending" }
+    },
+    {
+      "id": 23, "title": "🔴 HTTP — 5xx (error)",
+      "type": "logs", "gridPos": { "h": 7, "w": 8, "x": 16, "y": 13 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [{ "expr": "{service=\"api-dev\"} | json | type=\"request\" | source=\"router\" | level=\"error\" | line_format \"[{{.status}}] {{.method}} {{.path}} | {{.request_id}}\"", "refId": "A" }],
+      "options": { "showTime": true, "showLabels": false, "wrapLogMessage": false, "sortOrder": "Descending" }
+    },
+
+    { "id": 30, "title": "── 🔔 WEBHOOK ──────────────────────────────────────────────────────────────────────────────────────────────", "type": "text", "gridPos": { "h": 1, "w": 24, "x": 0, "y": 20 }, "options": { "content": "", "mode": "markdown" } },
+
+    {
+      "id": 31, "title": "✅ Webhook — INFO",
+      "type": "logs", "gridPos": { "h": 6, "w": 8, "x": 0, "y": 21 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [{ "expr": "{service=\"api-dev\"} | json | type=\"webhook\" | level=\"info\" | line_format \"{{.message}} | event: {{.event_id}} | email: {{.cliente_email}} | prio: {{.prioridade}}\"", "refId": "A" }],
+      "options": { "showTime": true, "showLabels": false, "wrapLogMessage": false, "sortOrder": "Descending" }
+    },
+    {
+      "id": 32, "title": "⚠️ Webhook — WARN (duplicatas)",
+      "type": "logs", "gridPos": { "h": 6, "w": 8, "x": 8, "y": 21 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [{ "expr": "{service=\"api-dev\"} | json | type=\"webhook\" | level=\"warn\" | line_format \"{{.message}} | event: {{.event_id}} | reason: {{.reason}}\"", "refId": "A" }],
+      "options": { "showTime": true, "showLabels": false, "wrapLogMessage": false, "sortOrder": "Descending" }
+    },
+    {
+      "id": 33, "title": "🔴 Webhook — ERROR",
+      "type": "logs", "gridPos": { "h": 6, "w": 8, "x": 16, "y": 21 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [{ "expr": "{service=\"api-dev\"} | json | type=\"webhook\" | level=\"error\" | line_format \"{{.message}} | event: {{.event_id}} | {{.error}}\"", "refId": "A" }],
+      "options": { "showTime": true, "showLabels": false, "wrapLogMessage": true, "sortOrder": "Descending" }
+    },
+
+    { "id": 40, "title": "── ⚙️ INFRASTRUCTURE (Pipefy / Circuit Breaker) ──────────────────────────────────────────────────────────", "type": "text", "gridPos": { "h": 1, "w": 24, "x": 0, "y": 27 }, "options": { "content": "", "mode": "markdown" } },
+
+    {
+      "id": 41, "title": "✅ Infrastructure — INFO",
+      "type": "logs", "gridPos": { "h": 6, "w": 8, "x": 0, "y": 28 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [{ "expr": "{service=\"api-dev\"} | json | type=\"infrastructure\" | level=\"info\" | line_format \"{{.message}} | attempt: {{.attempt}} | latency: {{.latency}}\"", "refId": "A" }],
+      "options": { "showTime": true, "showLabels": false, "wrapLogMessage": false, "sortOrder": "Descending" }
+    },
+    {
+      "id": 42, "title": "⚠️ Infrastructure — WARN (CB state)",
+      "type": "logs", "gridPos": { "h": 6, "w": 8, "x": 8, "y": 28 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [{ "expr": "{service=\"api-dev\"} | json | type=\"infrastructure\" | level=\"warn\" | line_format \"{{.message}} | from: {{.from}} → {{.to}}\"", "refId": "A" }],
+      "options": { "showTime": true, "showLabels": false, "wrapLogMessage": false, "sortOrder": "Descending" }
+    },
+    {
+      "id": 43, "title": "🔴 Infrastructure — ERROR (falhas Pipefy)",
+      "type": "logs", "gridPos": { "h": 6, "w": 8, "x": 16, "y": 28 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [{ "expr": "{service=\"api-dev\"} | json | type=\"infrastructure\" | level=\"error\" | line_format \"{{.message}} | attempt: {{.attempt}} | {{.error}}\"", "refId": "A" }],
+      "options": { "showTime": true, "showLabels": false, "wrapLogMessage": true, "sortOrder": "Descending" }
+    },
+
+    { "id": 50, "title": "── 🔀 NGINX ────────────────────────────────────────────────────────────────────────────────────────────────", "type": "text", "gridPos": { "h": 1, "w": 24, "x": 0, "y": 34 }, "options": { "content": "", "mode": "markdown" } },
+
+    {
+      "id": 51, "title": "🔀 NGINX — Access Log",
+      "type": "logs", "gridPos": { "h": 6, "w": 24, "x": 0, "y": 35 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [{ "expr": "{service=\"nginx-dev\"}", "refId": "A" }],
+      "options": { "showTime": true, "showLabels": false, "wrapLogMessage": false, "sortOrder": "Descending" }
+    }
+  ]
+}

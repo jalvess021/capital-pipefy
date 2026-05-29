@@ -35,15 +35,25 @@ func requestLogger(log *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 		c.Next()
+		status := c.Writer.Status()
 		reqID, _ := c.Get(middleware.RequestIDKey)
-		logger.RequestInfo(log, "request",
+		fields := []zap.Field{
 			zap.String("request_id", reqID.(string)),
 			zap.String("method", c.Request.Method),
 			zap.String("path", c.Request.URL.Path),
-			zap.Int("status", c.Writer.Status()),
+			zap.Int("status", status),
 			zap.Duration("latency", time.Since(start)),
 			zap.String("ip", c.ClientIP()),
-		)
+			zap.String("source", "router"),
+		}
+		switch {
+		case status >= 500:
+			logger.RequestError(log, "request", nil, fields...)
+		case status >= 400:
+			logger.RequestWarn(log, "request", fields...)
+		default:
+			logger.RequestInfo(log, "request", fields...)
+		}
 	}
 }
 
